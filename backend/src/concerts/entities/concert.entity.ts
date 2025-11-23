@@ -1,36 +1,32 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  OneToMany,
-} from 'typeorm';
-import { Reservation } from '../../reservations/entities/reservation.entity';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
 
-@Entity('concerts')
+export type ConcertDocument = Concert & Document;
+
+@Schema({ timestamps: true })
 export class Concert {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
-  @Column({ type: 'varchar', length: 255 })
+  @Prop({ required: true })
   name: string;
 
-  @Column({ type: 'text' })
+  @Prop({ required: true })
   description: string;
 
-  @Column({ type: 'int' })
+  @Prop({ required: true })
   totalSeats: number;
 
-  @Column({ type: 'int' })
+  @Prop({ required: true })
   availableSeats: number;
 
-  @OneToMany(() => Reservation, (reservation) => reservation.concert)
-  reservations: Reservation[];
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Reservation' }] })
+  reservations: Types.ObjectId[];
 }
+
+export const ConcertSchema = SchemaFactory.createForClass(Concert);
+
+ConcertSchema.set('toJSON', {
+  virtuals: true,
+  versionKey: false,
+  transform: function (doc, ret) {
+    delete ret._id;
+  },
+});

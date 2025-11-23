@@ -4,11 +4,13 @@ import React, { useEffect, useState } from 'react';
 import { Concert, Reservation } from '@/lib/types';
 import { concertApi, reservationApi } from '@/lib/api';
 import toast from 'react-hot-toast';
+import UserLayout from '@/components/UserLayout';
 
 export default function UserPage() {
   const [concerts, setConcerts] = useState<Concert[]>([]);
   const [myReservations, setMyReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reserving, setReserving] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -25,7 +27,7 @@ export default function UserPage() {
       setMyReservations(reservationsData);
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast.error('เกิดข้อผิดพลาดในการโหลดข้อมูล');
+      toast.error('Failed to load data');
     } finally {
       setLoading(false);
     }
@@ -33,31 +35,32 @@ export default function UserPage() {
 
   const handleReserve = async (concertId: string) => {
     try {
+      setReserving(concertId);
       await reservationApi.create(concertId);
-      toast.success('จองตั๋วสำเร็จ!');
+      toast.success('Reservation success!');
       fetchData();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'ไม่สามารถจองได้');
+      toast.error(error.response?.data?.message || 'Failed to reserve');
+    } finally {
+      setReserving(null);
     }
   };
 
-  const handleCancel = async (concertId: string) => {
-    const reservation = myReservations.find(
-      r => r.concertId === concertId && r.status === 'active'
-    );
-    if (!reservation) return;
-
+  const handleCancel = async (reservationId: string) => {
     try {
-      await reservationApi.cancel(reservation.id);
-      toast.success('ยกเลิกการจองสำเร็จ!');
+      setReserving(reservationId);
+      await reservationApi.cancel(reservationId);
+      toast.success('Cancel success!');
       fetchData();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'ไม่สามารถยกเลิกได้');
+      toast.error(error.response?.data?.message || 'Failed to cancel');
+    } finally {
+      setReserving(null);
     }
   };
 
-  const hasReservation = (concertId: string) => {
-    return myReservations.some(
+  const getReservation = (concertId: string) => {
+    return myReservations.find(
       r => r.concertId === concertId && r.status === 'active'
     );
   };
@@ -65,99 +68,65 @@ export default function UserPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">กำลังโหลด...</p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">Concert</h1>
-            <div className="flex gap-2">
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                User
-              </span>
-              <a
-                href="/admin"
-                className="px-3 py-1 bg-gray-200 text-gray-800 rounded-full text-sm hover:bg-gray-300"
-              >
-                Admin
-              </a>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <UserLayout title="User">
+      <div className="flex flex-col gap-6">
         {concerts.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">ยังไม่มีคอนเสิร์ต</p>
+            <p className="text-gray-500 text-lg">No concerts available</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {concerts.map((concert) => {
-              const isOutOfSeats = concert.availableSeats === 0;
-              const userHasReservation = hasReservation(concert.id);
+          concerts.map((concert) => {
+            const isOutOfSeats = concert.availableSeats === 0;
+            const reservation = getReservation(concert.id);
 
-              return (
-                <div
-                  key={concert.id}
-                  className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-                >
-                  <h3 className="text-xl font-bold text-blue-600 mb-2">
-                    {concert.name}
-                  </h3>
-                  <p className="text-gray-600 mb-4 line-clamp-3">
-                    {concert.description}
-                  </p>
+            return (
+              <div key={concert.id} className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+                <h3 className="text-xl font-bold text-[#2196f3] mb-4">{concert.name}</h3>
+                <hr className="border-gray-100 mb-4" />
+                <p className="text-gray-800 mb-6 leading-relaxed">
+                  {concert.description}
+                </p>
 
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="text-sm text-gray-500">
-                      <span className="font-semibold">ที่นั่ง:</span>{' '}
-                      <span
-                        className={
-                          isOutOfSeats
-                            ? 'text-red-500 font-bold'
-                            : 'text-green-600'
-                        }
-                      >
-                        {concert.availableSeats} / {concert.totalSeats}
-                      </span>
-                    </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center text-gray-900 text-lg">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    {concert.availableSeats.toLocaleString()}
                   </div>
 
-                  <div className="flex gap-2">
-                    {userHasReservation ? (
-                      <button
-                        onClick={() => handleCancel(concert.id)}
-                        className="w-full bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
-                      >
-                        ยกเลิกการจอง
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleReserve(concert.id)}
-                        disabled={isOutOfSeats}
-                        className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {isOutOfSeats ? 'หมด' : 'จอง'}
-                      </button>
-                    )}
-                  </div>
+                  {reservation ? (
+                    <button
+                      onClick={() => handleCancel(reservation.id)}
+                      disabled={reserving === reservation.id}
+                      className="bg-[#ef5350] text-white px-6 py-2 rounded hover:bg-red-600 transition-colors disabled:opacity-50"
+                    >
+                      {reserving === reservation.id ? 'Processing...' : 'Cancel'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleReserve(concert.id)}
+                      disabled={isOutOfSeats || reserving === concert.id}
+                      className={`px-6 py-2 rounded text-white font-medium transition-colors ${isOutOfSeats
+                          ? 'bg-gray-400 cursor-not-allowed'
+                          : 'bg-[#2196f3] hover:bg-blue-600'
+                        }`}
+                    >
+                      {reserving === concert.id ? 'Processing...' : isOutOfSeats ? 'Sold Out' : 'Reserve'}
+                    </button>
+                  )}
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })
         )}
-      </main>
-    </div>
+      </div>
+    </UserLayout>
   );
 }

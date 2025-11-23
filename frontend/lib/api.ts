@@ -1,61 +1,74 @@
 import axios from 'axios';
 import { Concert, Reservation } from './types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
+});
+
+// Add interceptor to inject User ID
+api.interceptors.request.use((config) => {
+  const userId = localStorage.getItem('userId');
+  if (userId) {
+    config.headers['x-user-id'] = userId;
+  }
+  return config;
 });
 
 // Concerts API
 export const concertApi = {
   getAll: async () => {
-    const response = await api.get<Concert[]>('/concerts');
+    const response = await api.get<Concert[]>('/api/concerts');
     return response.data;
   },
-  
+
   getById: async (id: string) => {
-    const response = await api.get<Concert>(`/concerts/${id}`);
+    const response = await api.get<Concert>(`/api/concerts/${id}`);
     return response.data;
   },
-  
-  create: async (data: { name: string; description: string; totalSeats: number }) => {
-    const response = await api.post<Concert>('/concerts', data);
+
+  create: async (data: Partial<Concert>) => {
+    const response = await api.post<Concert>('/api/concerts', data);
     return response.data;
   },
-  
+
   update: async (id: string, data: Partial<Concert>) => {
-    const response = await api.patch<Concert>(`/concerts/${id}`, data);
+    const response = await api.patch<Concert>(`/api/concerts/${id}`, data);
     return response.data;
   },
-  
+
   delete: async (id: string) => {
-    await api.delete(`/concerts/${id}`);
+    await api.delete(`/api/concerts/${id}`);
   },
 };
 
 // Reservations API
 export const reservationApi = {
   getAll: async () => {
-    const response = await api.get<Reservation[]>('/reservations');
+    const response = await api.get<Reservation[]>('/api/reservations');
     return response.data;
   },
-  
+
   getMyReservations: async () => {
-    const response = await api.get<Reservation[]>('/reservations/my');
+    const response = await api.get<Reservation[]>('/api/reservations/my');
     return response.data;
   },
-  
+
   create: async (concertId: string) => {
-    const response = await api.post<Reservation>('/reservations', { concertId });
+    console.log('Creating reservation for concert:', concertId);
+    const response = await api.post<Reservation>('/api/reservations', { concertId });
     return response.data;
   },
-  
+
   cancel: async (id: string) => {
-    const response = await api.patch<Reservation>(`/reservations/${id}/cancel`);
+    await api.patch(`/api/reservations/${id}/cancel`);
+  },
+};
+
+export const userApi = {
+  login: async (name: string) => {
+    const response = await api.post('/api/users/login', { name });
     return response.data;
   },
 };

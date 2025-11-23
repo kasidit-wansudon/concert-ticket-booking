@@ -1,157 +1,177 @@
 # Concert Ticket Booking System
 
-A full-stack concert ticket reservation application built with Next.js and NestJS.
+ระบบจองตั๋วคอนเสิร์ตออนไลน์ แบบ Full-stack พัฒนาด้วย Next.js และ NestJS
 
 ## 🎯 Project Overview
 
-This application allows users to browse concerts and reserve tickets, while admins can manage concerts and view reservation history. The system ensures fair ticket distribution with one seat per user.
+แอปพลิเคชันที่ให้ผู้ใช้สามารถดูและจองตั๋วคอนเสิร์ตได้ฟรี โดยผู้ดูแลระบบสามารถจัดการคอนเสิร์ตและดูประวัติการจองทั้งหมด ระบบรองรับการจอง 1 ที่นั่งต่อคน
 
-## 🏗️ Architecture
+## 🏗️ Application Architecture
 
-### Frontend (Next.js)
-- **Framework**: Next.js 14+ with App Router
-- **Styling**: Tailwind CSS for responsive design
-- **State Management**: React hooks and context
-- **API Communication**: Fetch API/Axios for REST calls
-
-### Backend (NestJS)
-- **Framework**: NestJS with TypeScript
-- **Database**: PostgreSQL with TypeORM
-- **Authentication**: JWT-based authentication
-- **Validation**: class-validator and class-transformer
-- **API Design**: RESTful endpoints
-
-### Database Schema
+### System Overview
 ```
+┌─────────────┐      HTTP/REST      ┌──────────────┐      Mongoose      ┌──────────┐
+│   Next.js   │ ←─────────────────→ │    NestJS    │ ←─────────────────→ │ MongoDB  │
+│  (Frontend) │                     │   (Backend)  │                     │          │
+│   Port 3000 │                     │   Port 3001  │                     │  Port    │
+│             │                     │              │                     │  27017   │
+└─────────────┘                     └──────────────┘                     └──────────┘
+```
+
+### Frontend Architecture (Next.js 14)
+- **App Router**: Modern routing ด้วย file-based structure
+- **Components**:
+  - `AdminLayout` - Layout สำหรับ Admin (Sidebar + Hamburger menu)
+  - `UserLayout` - Layout สำหรับ User (Authentication check)
+  - Shared components สำหรับ forms, cards, tables
+- **Pages**:
+  - `/` - User home (Concert list)
+  - `/history` - User history
+  - `/login` - Login by name
+  - `/admin` - Admin dashboard
+  - `/admin/history` - All reservations
+- **State Management**: React Hooks (useState, useEffect)
+- **API Client**: Axios with interceptors for auth headers
+- **Styling**: Tailwind CSS + Custom CSS (@/styles/button-effects.css)
+
+### Backend Architecture (NestJS)
+- **Modules**:
+  - `ConcertsModule` - Concert CRUD operations
+  - `ReservationsModule` - Reservation management with seat validation
+  - `UsersModule` - User authentication (Login by name)
+- **Controllers**: RESTful API endpoints
+- **Services**: Business logic and data access
+- **Entities**: Mongoose schemas with virtual population
+- **Validation**: DTO validation with class-validator
+
+### Database Schema (MongoDB)
+```typescript
 Concerts
-- id (PK)
-- name
-- description
-- totalSeats
-- availableSeats
-- createdAt
-- updatedAt
+- _id: ObjectId
+- name: String
+- description: String  
+- totalSeats: Number
+- availableSeats: Number
+- createdAt: Date
+- updatedAt: Date
 
 Reservations
-- id (PK)
-- userId
-- concertId (FK)
-- status (active/cancelled)
-- createdAt
-- updatedAt
+- _id: ObjectId
+- userId: ObjectId (ref: 'User')
+- concertId: ObjectId (ref: 'Concert')
+- status: Enum ['active', 'cancelled']
+- createdAt: Date
+- updatedAt: Date
+// Virtual fields (populated):
+- user: UserDocument
+- concert: ConcertDocument
 
 Users
-- id (PK)
-- email
-- name
-- role (admin/user)
-- password (hashed)
+- _id: ObjectId
+- email: String (unique)
+- name: String
+- password: String (hashed with bcrypt)
+- role: String (default: 'user')
 ```
 
 ## 📦 Tech Stack & Libraries
 
 ### Frontend Dependencies
-- **next**: React framework for production
-- **react** & **react-dom**: UI library
-- **tailwindcss**: Utility-first CSS framework
-- **axios**: HTTP client for API requests
-- **react-hook-form**: Form validation
-- **zod**: Schema validation
+| Library | Version | Purpose |
+|---------|---------|---------|
+| `next` | 14.2.0 | React framework with App Router |
+| `react` | ^18.3.0 | UI library |
+| `react-dom` | ^18.3.0 | React DOM renderer |
+| `axios` | ^1.6.8 | HTTP client แทน fetch พร้อม interceptors |
+| `tailwindcss` | ^3.4.3 | Utility-first CSS framework |
+| `react-hot-toast` | ^2.4.1 | Toast notifications for user feedback |
+| `clsx` | ^2.1.0 | Conditional className utility |
+| `tailwind-merge` | ^2.2.2 | Merge Tailwind classes without conflicts |
 
 ### Backend Dependencies
-- **@nestjs/core**: NestJS framework core
-- **@nestjs/common**: Common utilities
-- **@nestjs/typeorm**: TypeORM integration
-- **typeorm**: ORM for database operations
-- **pg**: PostgreSQL driver
-- **class-validator**: DTO validation
-- **class-transformer**: Object transformation
-- **@nestjs/jwt**: JWT authentication
-- **bcrypt**: Password hashing
+| Library | Version | Purpose |
+|---------|---------|---------|
+| `@nestjs/core` | ^10.0.0 | NestJS core framework |
+| `@nestjs/common` | ^10.0.0 | Common utilities (pipes, guards, decorators) |
+| `@nestjs/mongoose` | ^11.0.3 | Mongoose integration for MongoDB |
+| `mongoose` | ^8.9.3 | MongoDB ODM |
+| `bcrypt` | ^5.1.1 | Password hashing |
+| `class-validator` | ^0.14.1 | DTO validation |
+| `class-transformer` | ^0.5.1 | Object transformation |
 
-### Development Dependencies
-- **typescript**: Type safety
-- **jest**: Testing framework
-- **@nestjs/testing**: NestJS testing utilities
-- **eslint**: Code linting
-- **prettier**: Code formatting
+### Development & Testing
+| Library | Version | Purpose |
+|---------|---------|---------|
+| `typescript` | ^5 | Type safety across the stack |
+| `jest` | ^29.5.0 | Testing framework |
+| `@nestjs/testing` | ^10.0.0 | NestJS testing utilities |
+| `eslint` | - | Code linting |
+| `prettier` | - | Code formatting |
 
 ## 🚀 Setup Instructions
 
 ### Prerequisites
-- Node.js 18+ installed
-- PostgreSQL installed and running
+- Node.js 18+ 
+- MongoDB 6+ (ติดตั้งและรันแล้ว)
 - Git
 
-### Backend Setup
+### 1. Clone Repository
+```bash
+git clone https://github.com/kasidit-wansudon/concert-ticket-booking.git
+cd concert-ticket-booking
+```
 
-1. Navigate to backend directory:
+### 2. Backend Setup
+
 ```bash
 cd backend
 ```
 
-2. Install dependencies:
+#### Install Dependencies
 ```bash
 npm install
 ```
 
-3. Create `.env` file:
+#### Environment Configuration
+สร้างไฟล์ `.env` ใน `backend/`:
 ```env
-DATABASE_HOST=localhost
-DATABASE_PORT=5432
-DATABASE_USER=postgres
-DATABASE_PASSWORD=your_password
-DATABASE_NAME=concert_booking
-JWT_SECRET=your_jwt_secret_key
+DATABASE_URI=mongodb://localhost:27017/concert_booking
 PORT=3001
 ```
 
-4. Create database:
-```bash
-psql -U postgres
-CREATE DATABASE concert_booking;
-\q
-```
-
-5. Run migrations:
-```bash
-npm run migration:run
-```
-
-6. Start development server:
+#### Start Backend Server
 ```bash
 npm run start:dev
 ```
+✅ Backend จะรันที่ `http://localhost:3001`
 
-Backend will run on `http://localhost:3001`
+### 3. Frontend Setup
 
-### Frontend Setup
-
-1. Navigate to frontend directory:
+เปิด terminal ใหม่:
 ```bash
 cd frontend
 ```
 
-2. Install dependencies:
+#### Install Dependencies
 ```bash
 npm install
 ```
 
-3. Create `.env.local` file:
+#### Environment Configuration
+สร้างไฟล์ `.env.local` ใน `frontend/`:
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3001/api
 ```
 
-4. Start development server:
+#### Start Frontend Server
 ```bash
 npm run dev
 ```
+✅ Frontend จะรันที่ `http://localhost:3000`
 
-Frontend will run on `http://localhost:3000`
+## 🧪 Running Unit Tests
 
-## 🧪 Running Tests
-
-### Backend Unit Tests
+### Backend Tests (27 Tests)
 
 ```bash
 cd backend
@@ -162,190 +182,137 @@ npm test
 # Run tests in watch mode
 npm run test:watch
 
-# Run tests with coverage
+# Run tests with coverage report
 npm run test:cov
 
 # Run specific test file
 npm test -- concerts.service.spec.ts
 ```
 
-### Frontend Tests (Bonus)
+**Test Coverage:**
+- ✅ ConcertsService (8 tests)
+- ✅ ReservationsService (9 tests)
+- ✅ ConcertsController (5 tests)
+- ✅ ReservationsController (5 tests)
 
-```bash
-cd frontend
-
-# Run tests
-npm test
-
-# Run tests with coverage
-npm run test:coverage
+**Expected Output:**
+```
+Test Suites: 4 passed, 4 total
+Tests:       27 passed, 27 total
 ```
 
-## 📱 Features
+## 📱 Features Implemented
 
 ### User Features
-- ✅ View all concerts (including sold-out concerts)
-- ✅ Reserve one seat per concert
-- ✅ Cancel reservation
-- ✅ View personal reservation history
-- ✅ Responsive design (mobile, tablet, desktop)
+- ✅ **Login by Name** - เข้าสู่ระบบด้วยชื่อ (ไม่ต้องใช้ email/password)
+- ✅ **View Concerts** - ดูคอนเสิร์ตทั้งหมด (รวมที่เต็มแล้ว)
+- ✅ **Reserve Seat** - จองที่นั่ง (1 ที่/คน/คอนเสิร์ต)
+- ✅ **Cancel Reservation** - ยกเลิกได้ทั้งจากหน้าแรกและหน้า History
+- ✅ **View History** - ดูประวัติการจองของตัวเอง (แสดงชื่อ User และ Concert)
+- ✅ **Responsive Design** - รองรับ Mobile, Tablet, Desktop
 
 ### Admin Features
-- ✅ Create new concerts
-- ✅ Delete concerts
-- ✅ View all users' reservation history
-- ✅ Monitor seat availability
+- ✅ **Create Concert** - สร้างคอนเสิร์ต (Name, Description, Total Seats)
+- ✅ **Delete Concert** - ลบคอนเสิร์ต
+- ✅ **View All Reservations** - ดูประวัติการจองทั้งหมด (เห็นชื่อ User + Concert)
+- ✅ **Monitor Seats** - เช็คจำนวนที่นั่งคงเหลือ
 
 ### Technical Features
-- ✅ Server-side validation
-- ✅ Client-side error handling
-- ✅ JWT authentication
-- ✅ Unit tests for backend
-- ✅ Responsive UI design
-
-## 🎨 Design
-
-The application follows the Figma design specifications with:
-- Mobile-first responsive approach
-- Tailwind CSS utilities
-- Custom components for reusability
-- Consistent color scheme and typography
+- ✅ **Server-side Validation** - ตรวจสอบข้อมูลที่ Backend (Concert not found, No seats, etc.)
+- ✅ **Error Handling** - แสดง error ที่ Frontend ผ่าน Toast notifications
+- ✅ **Authentication** - ระบบ Login by name พร้อม localStorage
+- ✅ **Unit Tests** - ครบ 27 tests สำหรับ Backend
+- ✅ **Custom CSS** - Button effects (ripple, glow, hover animations)
+- ✅ **Virtual Populate** - MongoDB populate user และ concert ใน response
 
 ## 🔐 API Endpoints
 
-### Authentication
-```
-POST /api/auth/register - Register new user
-POST /api/auth/login - Login user
-GET /api/auth/profile - Get current user
+### Base URL: `http://localhost:3001/api`
+
+### Users
+```http
+POST /users/login
+Body: { name: string }
+Response: UserDocument
+
+GET /users/:email
+Response: UserDocument
+
+POST /users
+Body: { email, name, password }
+Response: UserDocument
 ```
 
 ### Concerts
-```
-GET /api/concerts - Get all concerts
-GET /api/concerts/:id - Get concert by ID
-POST /api/concerts - Create concert (Admin)
-DELETE /api/concerts/:id - Delete concert (Admin)
+```http
+GET /concerts
+Response: Concert[]
+
+GET /concerts/:id
+Response: Concert
+
+POST /concerts (Admin)
+Body: { name, description, totalSeats }
+Response: Concert
+
+PATCH /concerts/:id (Admin)
+Body: Partial<Concert>
+Response: Concert
+
+DELETE /concerts/:id (Admin)
+Response: void
 ```
 
 ### Reservations
+```http
+GET /reservations (Admin)
+Response: Reservation[] (with populated user & concert)
+
+GET /reservations/my
+Headers: { x-user-id }
+Response: Reservation[]
+
+POST /reservations
+Headers: { x-user-id }
+Body: { concertId }
+Response: Reservation
+
+PATCH /reservations/:id/cancel
+Response: Reservation
 ```
-GET /api/reservations - Get all reservations (Admin)
-GET /api/reservations/my - Get user's reservations
-POST /api/reservations - Create reservation
-DELETE /api/reservations/:id - Cancel reservation
-```
 
-## 💡 Bonus: Performance Optimization
+## 🎨 Custom CSS Features
 
-### For Intensive Data & High Traffic:
+ไฟล์ `frontend/styles/button-effects.css` ประกอบด้วย:
+- **Ripple Effect** - คลื่นน้ำขยายตอนกดปุ่ม
+- **Hover Lift** - ปุ่มลอยขึ้น 2px พร้อม box-shadow
+- **Press Effect** - Scale down ตอนกด (scale 0.98)
+- **Color Glows** - แสงเรืองตามสีปุ่ม (น้ำเงิน/แดง/เขียว)
+- **Icon Rotate** - ไอคอน SVG หมุน 5° ตอน hover
+- **Smooth Transitions** - 1.3s cubic-bezier animation
 
-1. **Database Optimization**
-   - Add database indexing on frequently queried fields
-   - Implement query optimization and pagination
-   - Use database connection pooling
-   - Consider read replicas for heavy read operations
+## 💡 Bonus: Performance & Scalability Suggestions
 
-2. **Caching Strategy**
-   - Redis for session management and frequently accessed data
-   - Cache concert list with invalidation on updates
-   - CDN for static assets
-   - Browser caching headers
+### สำหรับ High Traffic
+1. **Caching**: Redis สำหรับ concert list และ session
+2. **Database**: Indexing, Connection pooling, Read replicas
+3. **Backend**: Horizontal scaling, Load balancer, Rate limiting
+4. **Frontend**: SSR/SSG, Code splitting, CDN
 
-3. **Backend Scaling**
-   - Horizontal scaling with load balancers
-   - Implement API rate limiting
-   - Use message queues (RabbitMQ/Redis) for async operations
-   - Microservices architecture for independent scaling
-
-4. **Frontend Optimization**
-   - Server-Side Rendering (SSR) for initial load
-   - Static Site Generation (SSG) for concert listings
-   - Code splitting and lazy loading
-   - Image optimization with Next.js Image component
-   - Bundle size optimization
-
-### For Concurrent Ticket Reservations:
-
-1. **Database-Level Concurrency**
-   - Use database transactions with proper isolation levels
-   - Implement optimistic locking with version numbers
-   - Row-level locking during reservation
-   ```sql
-   SELECT * FROM concerts WHERE id = ? FOR UPDATE;
-   UPDATE concerts SET availableSeats = availableSeats - 1 
-   WHERE id = ? AND availableSeats > 0;
-   ```
-
-2. **Queue System**
-   - Implement reservation queue (FIFO)
-   - Process reservations sequentially
-   - Use Redis for queue management
-   - Provide position updates to users
-
-3. **Inventory Management**
-   - Check-and-set pattern
-   - Atomic counter operations
-   - Pre-reservation timeout mechanism
-   - Release reserved but unpaid tickets after timeout
-
-4. **Race Condition Prevention**
-   ```typescript
-   // Example NestJS service implementation
-   async reserveSeat(concertId: string, userId: string) {
-     return await this.dataSource.transaction(async (manager) => {
-       // Lock the concert row
-       const concert = await manager
-         .createQueryBuilder(Concert, 'concert')
-         .setLock('pessimistic_write')
-         .where('concert.id = :id', { id: concertId })
-         .getOne();
-
-       if (!concert || concert.availableSeats <= 0) {
-         throw new BadRequestException('No seats available');
-       }
-
-       // Check if user already has reservation
-       const existing = await manager.findOne(Reservation, {
-         where: { concertId, userId, status: 'active' }
-       });
-
-       if (existing) {
-         throw new BadRequestException('Already reserved');
-       }
-
-       // Create reservation and update seats atomically
-       concert.availableSeats -= 1;
-       await manager.save(concert);
-
-       const reservation = manager.create(Reservation, {
-         concertId,
-         userId,
-         status: 'active'
-       });
-       return await manager.save(reservation);
-     });
-   }
-   ```
-
-5. **Monitoring & Alerting**
-   - Real-time seat availability monitoring
-   - Alert system for overselling
-   - Logging all reservation attempts
-   - Performance metrics tracking
+### สำหรับ Concurrent Reservations
+1. **Transaction**: ใช้ MongoDB transactions พร้อม row-level locking
+2. **Validation**: Check `availableSeats > 0` ก่อน update atomically
+3. **Queue System**: FIFO queue ด้วย Redis
+4. **Optimistic Locking**: Version field สำหรับ concurrency control
 
 ## 📝 Development Notes
 
-- Regular commits showcase development progress
-- Error handling implemented on both client and server
-- Validation on both frontend (UX) and backend (security)
-- TypeScript for type safety across the stack
-- Environment variables for configuration
-- Comprehensive unit tests for critical functions
-
-## 🤝 Contributing
-
-This is a test project, but contributions and suggestions are welcome!
+- ✅ Regular commits แสดงการพัฒนาอย่างต่อเนื่อง
+- ✅ Error handling ทั้ง client และ server
+- ✅ TypeScript สำหรับ type safety
+- ✅ Environment variables สำหรับ configuration
+- ✅ Comprehensive unit tests (27 tests)
+- ✅ Responsive design ตาม Figma spec
 
 ## 📄 License
 

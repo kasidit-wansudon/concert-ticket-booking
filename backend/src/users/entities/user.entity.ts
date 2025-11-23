@@ -1,47 +1,43 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  OneToMany,
-} from 'typeorm';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
 import { Exclude } from 'class-transformer';
-import { Reservation } from '../../reservations/entities/reservation.entity';
 
 export enum UserRole {
   ADMIN = 'admin',
   USER = 'user',
 }
 
-@Entity('users')
-export class User {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+export type UserDocument = User & Document;
 
-  @Column({ unique: true })
+@Schema({ timestamps: true })
+export class User {
+  @Prop({ unique: true, required: true })
   email: string;
 
-  @Column()
+  @Prop({ required: true })
   name: string;
 
-  @Column()
+  @Prop({ required: true })
   @Exclude() // Exclude password from response
   password: string;
 
-  @Column({
-    type: 'enum',
+  @Prop({
+    type: String,
     enum: UserRole,
     default: UserRole.USER,
   })
   role: UserRole;
 
-  @OneToMany(() => Reservation, (reservation) => reservation.user)
-  reservations: Reservation[];
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Reservation' }] })
+  reservations: Types.ObjectId[];
 }
+
+export const UserSchema = SchemaFactory.createForClass(User);
+
+UserSchema.set('toJSON', {
+  virtuals: true,
+  versionKey: false,
+  transform: function (doc, ret) {
+    delete ret._id;
+  },
+});

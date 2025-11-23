@@ -16,7 +16,7 @@ This application allows users to browse concerts and reserve tickets, while admi
 
 ### Backend (NestJS)
 - **Framework**: NestJS with TypeScript
-- **Database**: PostgreSQL with TypeORM
+- **Database**: Mongodb with TypeORM
 - **Authentication**: JWT-based authentication
 - **Validation**: class-validator and class-transformer
 - **API Design**: RESTful endpoints
@@ -63,7 +63,7 @@ Users
 - **@nestjs/common**: Common utilities
 - **@nestjs/typeorm**: TypeORM integration
 - **typeorm**: ORM for database operations
-- **pg**: PostgreSQL driver
+- **pg**: Mongodb driver
 - **class-validator**: DTO validation
 - **class-transformer**: Object transformation
 - **@nestjs/jwt**: JWT authentication
@@ -80,7 +80,7 @@ Users
 
 ### Prerequisites
 - Node.js 18+ installed
-- PostgreSQL installed and running
+- Mongodb installed and running
 - Git
 
 ### Backend Setup

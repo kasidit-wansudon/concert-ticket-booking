@@ -9,7 +9,7 @@ export default function EditConcertPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
-  
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -31,7 +31,7 @@ export default function EditConcertPage() {
         totalSeats: data.totalSeats.toString(),
       });
     } catch (error) {
-      toast.error('ไม่พบข้อมูลคอนเสิร์ต');
+      toast.error('Concert not found');
       router.push('/admin');
     } finally {
       setLoading(false);
@@ -42,7 +42,7 @@ export default function EditConcertPage() {
     e.preventDefault();
 
     if (!formData.name || !formData.description || !formData.totalSeats) {
-      toast.error('กรุณากรอกข้อมูลให้ครบถ้วน');
+      toast.error('Please fill in all fields');
       return;
     }
 
@@ -53,10 +53,10 @@ export default function EditConcertPage() {
         description: formData.description,
         totalSeats: parseInt(formData.totalSeats),
       });
-      toast.success('แก้ไขคอนเสิร์ตสำเร็จ!');
+      toast.success('Update concert success!');
       router.push('/admin');
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'เกิดข้อผิดพลาด');
+      toast.error(error.response?.data?.message || 'An error occurred');
     } finally {
       setSaving(false);
     }
@@ -74,7 +74,7 @@ export default function EditConcertPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">แก้ไขคอนเสิร์ต</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Edit Concert</h1>
         </div>
       </header>
 
@@ -83,7 +83,7 @@ export default function EditConcertPage() {
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                ชื่อคอนเสิร์ต
+                Concert Name
               </label>
               <input
                 type="text"
@@ -95,7 +95,7 @@ export default function EditConcertPage() {
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                รายละเอียด
+                Description
               </label>
               <textarea
                 value={formData.description}
@@ -107,7 +107,7 @@ export default function EditConcertPage() {
 
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                จำนวนที่นั่ง
+                Total Seats
               </label>
               <input
                 type="number"
@@ -124,14 +124,14 @@ export default function EditConcertPage() {
                 onClick={() => router.push('/admin')}
                 className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
               >
-                ยกเลิก
+                Cancel
               </button>
               <button
                 type="submit"
                 disabled={saving}
                 className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
               >
-                {saving ? 'กำลังบันทึก...' : 'บันทึก'}
+                {saving ? 'Saving...' : 'Save'}
               </button>
             </div>
           </form>

@@ -1,49 +1,55 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
-import { Concert } from '../../concerts/entities/concert.entity';
-import { User } from '../../users/entities/user.entity';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
 
 export enum ReservationStatus {
   ACTIVE = 'active',
   CANCELLED = 'cancelled',
 }
 
-@Entity('reservations')
+export type ReservationDocument = Reservation & Document;
+
+@Schema({ timestamps: true, toJSON: { virtuals: true } })
 export class Reservation {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  userId: Types.ObjectId;
 
-  @Column({ type: 'uuid' })
-  userId: string;
+  @Prop({ type: Types.ObjectId, ref: 'Concert', required: true })
+  concertId: Types.ObjectId;
 
-  @Column({ type: 'uuid' })
-  concertId: string;
-
-  @Column({
-    type: 'enum',
+  @Prop({
+    type: String,
     enum: ReservationStatus,
     default: ReservationStatus.ACTIVE,
   })
   status: ReservationStatus;
 
-  @ManyToOne(() => User, (user) => user.reservations)
-  @JoinColumn({ name: 'userId' })
-  user: User;
-
-  @ManyToOne(() => Concert, (concert) => concert.reservations)
-  @JoinColumn({ name: 'concertId' })
-  concert: Concert;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
+  // Virtual fields for populated data
+  user?: any;
+  concert?: any;
 }
+
+export const ReservationSchema = SchemaFactory.createForClass(Reservation);
+
+// Configure virtual populate for user
+ReservationSchema.virtual('user', {
+  ref: 'User',
+  localField: 'userId',
+  foreignField: '_id',
+  justOne: true,
+});
+
+// Configure virtual populate for concert
+ReservationSchema.virtual('concert', {
+  ref: 'Concert',
+  localField: 'concertId',
+  foreignField: '_id',
+  justOne: true,
+});
+
+ReservationSchema.set('toJSON', {
+  virtuals: true,
+  versionKey: false,
+  transform: function (doc, ret) {
+    delete ret._id;
+  },
+});
